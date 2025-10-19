@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINAURA AI STUDIO - Your Collection, Digitally Styled.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Minimalist Neutrals -->
+    <!-- Application Structure Plan: A thematic, single-page scrolling website designed to guide potential clients through a compelling narrative. It starts with a bold Hero section stating the value proposition, moves to outline the 'Problem' with traditional photoshoots, presents Finaura as the 'Solution', explains the 'Process' in simple steps, provides powerful proof in an interactive 'Showcase' with before-and-after sliders, lists the key 'Benefits', shows the 'Use Cases', and ends with a clear 'Call to Action'. This structure was chosen over a direct report mimicry because it creates a persuasive marketing funnel, educating and convincing the user step-by-step, culminating in the interactive portfolio which is the most critical conversion tool. -->
+    <!-- Visualization & Content Choices: 
+        - Hero/Problem/Promise Sections: Goal: Inform/Persuade. Method: Large typography and concise, bold statements using HTML/Tailwind. Interaction: Subtle text animations on scroll. Justification: Grabs attention and quickly communicates the core business value.
+        - Process Section: Goal: Explain. Method: A numbered, 3-step visual guide using an HTML list styled with Tailwind to create distinct cards. Interaction: Elements fade in on scroll. Justification: Breaks down the process into easily digestible steps, making it seem simple and efficient.
+        - Showcase Section: Goal: Compare/Demonstrate. Method: An interactive before-and-after image comparison slider for multiple examples. Built with two overlapping images in an HTML container. Interaction: User can click and drag a handle to reveal the 'after' image. This is the centerpiece. Justification: Provides tangible, interactive proof of the service's quality and is far more engaging than static images. Library/Method: Vanilla JavaScript for slider logic.
+        - Benefits/Use Cases: Goal: Reinforce value. Method: A grid of cards with HTML/Tailwind, each with an icon (Unicode) and text. Interaction: Hover effects. Justification: A clean, scannable format for summarizing key selling points.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFDFD;
+            color: #1a1a1a;
+        }
+        .finaura-gold { color: #B08D57; }
+        .bg-finaura-gold { background-color: #B08D57; }
+        .border-finaura-gold { border-color: #B08D57; }
+
+        .comparison-slider {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border-radius: 0.75rem;
+            cursor: col-resize;
+        }
+        .comparison-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+        .comparison-image.after {
+            clip-path: inset(0 0 0 50%);
+        }
+        .comparison-handle {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 4px;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            transform: translateX(-50%);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .comparison-handle::before, .comparison-handle::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+        .comparison-handle-button {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            color: white;
+        }
+        .comparison-handle-button::before {
+            content: '◀';
+            font-size: 12px;
+        }
+        .comparison-handle-button::after {
+            content: '▶';
+            font-size: 12px;
+        }
+        .label {
+            position: absolute;
+            top: 1rem;
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            pointer-events: none;
+        }
+        .label.before { left: 1rem; }
+        .label.after { right: 1rem; }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .gemini-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #B08D57;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm shadow-sm">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#hero" class="flex items-center space-x-2">
+                <span class="text-2xl font-extrabold tracking-tighter">FINAURA</span>
+                <span class="text-xl font-medium text-gray-500 tracking-wide">AI STUDIO</span>
+            </a>
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#problem" class="text-gray-600 hover:finaura-gold transition-colors">The Problem</a>
+                <a href="#process" class="text-gray-600 hover:finaura-gold transition-colors">Process</a>
+                <a href="#showcase" class="text-gray-600 hover:finaura-gold transition-colors">Showcase</a>
+                <a href="#pricing" class="text-gray-600 hover:finaura-gold transition-colors">Pricing</a>
+                <a href="#creative-lab" class="text-gray-600 hover:finaura-gold transition-colors">Creative Lab</a>
+            </nav>
+            <a href="#contact" class="hidden md:inline-block bg-finaura-gold text-white px-6 py-2 rounded-full hover:opacity-90 transition-opacity">Get Started</a>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero" class="min-h-screen flex items-center pt-20 bg-gray-50">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-5xl md:text-8xl font-extrabold tracking-tighter leading-tight fade-in">
+                    Your Collection,<br><span class="finaura-gold">Digitally Styled.</span>
+                </h1>
+                <p class="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-gray-600 fade-in" style="transition-delay: 200ms;">
+                    No shipping. No damage. No logistics. Just editorial-grade imagery at scale, delivered in 24 hours.
+                </p>
+            </div>
+        </section>
+
+        <section id="problem" class="py-20 md:py-32 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center max-w-3xl mx-auto">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 fade-in">The Problem with Tradition</h2>
+                    <p class="mt-4 text-3xl md:text-5xl font-bold tracking-tight fade-in" style="transition-delay: 100ms;">Photoshoots are a logistical nightmare.</p>
+                </div>
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="bg-gray-50 p-8 rounded-xl fade-in" style="transition-delay: 200ms;">
+                        <span class="text-4xl">💸</span>
+                        <h3 class="mt-4 text-xl font-semibold">Expensive & Unpredictable</h3>
+                        <p class="mt-2 text-gray-600">Studio, model, and crew costs add up quickly, with budgets often spiraling.</p>
+                    </div>
+                    <div class="bg-gray-50 p-8 rounded-xl fade-in" style="transition-delay: 300ms;">
+                        <span class="text-4xl">📦</span>
+                        <h3 class="mt-4 text-xl font-semibold">Sample Logistics & Damage</h3>
+                        <p class="mt-2 text-gray-600">Shipping garments risks loss or damage, creating costly delays and inventory issues.</p>
+                    </div>
+                    <div class="bg-gray-50 p-8 rounded-xl fade-in" style="transition-delay: 400ms;">
+                        <span class="text-4xl">⏳</span>
+                        <h3 class="mt-4 text-xl font-semibold">Weeks of Waiting</h3>
+                        <p class="mt-2 text-gray-600">From coordination to final edits, the entire process can take weeks, slowing down your campaign launch.</p>
+                    </div>
+                    <div class="bg-gray-50 p-8 rounded-xl fade-in" style="transition-delay: 500ms;">
+                        <span class="text-4xl">👤</span>
+                        <h3 class="mt-4 text-xl font-semibold">Limited Creative Scope</h3>
+                        <p class="mt-2 text-gray-600">One model, one location, one look. Your creative vision is constrained by physical limitations.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="solution" class="py-20 md:py-32 bg-gray-900 text-white">
+            <div class="container mx-auto px-6 text-center">
+                 <h2 class="text-4xl md:text-6xl font-extrabold tracking-tighter fade-in">Our Promise</h2>
+                 <p class="mt-12 text-3xl md:text-5xl font-bold tracking-tight text-gray-300 fade-in" style="transition-delay: 200ms;">
+                    <span class="text-white">NO</span> STUDIOS. 
+                    <span class="text-white">NO</span> SHIPPING. 
+                    <span class="text-white">NO</span> STRESS.
+                </p>
+                <p class="mt-8 max-w-3xl mx-auto text-lg text-gray-400 fade-in" style="transition-delay: 400ms;">
+                    Just pure, editorial-grade imagery at scale. Delivered within 24 hours, or it's on us.
+                </p>
+            </div>
+        </section>
+
+        <section id="process" class="py-20 md:py-32 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center max-w-3xl mx-auto">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 fade-in">The Process</h2>
+                    <p class="mt-4 text-3xl md:text-5xl font-bold tracking-tight fade-in" style="transition-delay: 100ms;">Effortless. Precise. Beautiful.</p>
+                    <p class="mt-6 text-lg text-gray-600 fade-in" style="transition-delay: 200ms;">From a simple photo to a complete fashion story, perfected within a day. Here's how we make it happen.</p>
+                </div>
+                <div class="mt-16 max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+                    <div class="p-8 text-center fade-in" style="transition-delay: 300ms;">
+                        <div class="mx-auto w-20 h-20 flex items-center justify-center border-2 border-finaura-gold text-finaura-gold text-3xl font-bold rounded-full">1</div>
+                        <h3 class="mt-6 text-xl font-semibold">You Send The Look</h3>
+                        <p class="mt-2 text-gray-600">Just send us a clear photo of your garment. On a hanger, a mannequin, or flat-lay—it all works.</p>
+                    </div>
+                    <div class="p-8 text-center fade-in" style="transition-delay: 400ms;">
+                        <div class="mx-auto w-20 h-20 flex items-center justify-center border-2 border-finaura-gold text-finaura-gold text-3xl font-bold rounded-full">2</div>
+                        <h3 class="mt-6 text-xl font-semibold">AI Creates The Vision</h3>
+                        <p class="mt-2 text-gray-600">Our expert prompt engineers guide our AI to generate stunning scenes with diverse models and aesthetics.</p>
+                    </div>
+                    <div class="p-8 text-center fade-in" style="transition-delay: 500ms;">
+                        <div class="mx-auto w-20 h-20 flex items-center justify-center border-2 border-finaura-gold text-finaura-gold text-3xl font-bold rounded-full">3</div>
+                        <h3 class="mt-6 text-xl font-semibold">Editors Refine The Detail</h3>
+                        <p class="mt-2 text-gray-600">A human touch ensures perfection. Our editors meticulously refine every pixel for flawless results.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="showcase" class="py-20 md:py-32 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <div class="text-center max-w-3xl mx-auto">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 fade-in">The Showcase</h2>
+                    <p class="mt-4 text-3xl md:text-5xl font-bold tracking-tight fade-in" style="transition-delay: 100ms;">Seeing is Believing.</p>
+                    <p class="mt-6 text-lg text-gray-600 fade-in" style="transition-delay: 200ms;">Interact with the sliders below to see the transformation. We turn simple product photos into captivating fashion imagery that tells a story and drives sales.</p>
+                </div>
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="fade-in" style="transition-delay: 300ms;">
+                        <div class="comparison-slider" data-before="https://placehold.co/600x600/e2e8f0/4a5568?text=Before:\nBlue+Dress\n+on+Hanger" data-after="https://placehold.co/600x600/a0aec0/ffffff?text=After:\nModel+in+Paris"></div>
+                    </div>
+                     <div class="fade-in" style="transition-delay: 400ms;">
+                        <div class="comparison-slider" data-before="https://placehold.co/600x600/e2e8f0/4a5568?text=Before:\nKnit+Sweater\n+Flat-Lay" data-after="https://placehold.co/600x600/a0aec0/ffffff?text=After:\nCozy+Cafe+Scene"></div>
+                    </div>
+                    <div class="fade-in" style="transition-delay: 500ms;">
+                        <div class="comparison-slider" data-before="https://placehold.co/600x600/e2e8f0/4a5568?text=Before:\nWhite+Shirt\n+on+Mannequin" data-after="https://placehold.co/600x600/a0aec0/ffffff?text=After:\nBeach+Lookbook"></div>
+                    </div>
+                     <div class="fade-in" style="transition-delay: 300ms;">
+                        <div class="comparison-slider" data-before="https://placehold.co/600x600/e2e8f0/4a5568?text=Before:\nJacket+Photo" data-after="https://placehold.co/600x600/a0aec0/ffffff?text=After:\nUrban+Street+Style"></div>
+                    </div>
+                     <div class="fade-in" style="transition-delay: 400ms;">
+                        <div class="comparison-slider" data-before="https://placehold.co/600x600/e2e8f0/4a5568?text=Before:\nSimple+Handbag" data-after="https://placehold.co/600x600/a0aec0/ffffff?text=After:\nLuxury+Lifestyle+Ad"></div>
+                    </div>
+                     <div class="fade-in" style="transition-delay: 500ms;">
+                        <div class="comparison-slider" data-before="https://placehold.co/600x600/e2e8f0/4a5568?text=Before:\nKids+T-Shirt" data-after="https://placehold.co/600x600/a0aec0/ffffff?text=After:\nPlayful+Park+Setting"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="pricing" class="py-20 md:py-32 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center max-w-3xl mx-auto">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 fade-in">Pricing</h2>
+                    <p class="mt-4 text-3xl md:text-5xl font-bold tracking-tight fade-in" style="transition-delay: 100ms;">Simple, Transparent Plans.</p>
+                    <p class="mt-6 text-lg text-gray-600 fade-in" style="transition-delay: 200ms;">Choose a plan that fits your needs. No hidden fees, just stunning results delivered at speed. All plans include our 24-hour delivery promise.</p>
+                </div>
+                <div class="mt-16 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    
+                    <div class="border border-gray-200 rounded-xl p-6 flex flex-col fade-in" style="transition-delay: 200ms;">
+                        <h3 class="text-xl font-bold">Pilot</h3>
+                        <p class="mt-2 text-gray-500">Up to 10 images</p>
+                        <p class="mt-6 text-4xl font-bold">₹2,500</p>
+                        <p class="mt-1 text-gray-500 text-sm">₹250 per image</p>
+                        <div class="flex-grow"></div>
+                        <a href="#contact" class="mt-8 block w-full text-center bg-gray-100 text-gray-800 px-6 py-3 rounded-full hover:bg-gray-200 transition-colors">Get Started</a>
+                    </div>
+
+                    <div class="border border-gray-200 rounded-xl p-6 flex flex-col fade-in" style="transition-delay: 300ms;">
+                        <h3 class="text-xl font-bold">Starter</h3>
+                        <p class="mt-2 text-gray-500">Up to 30 images</p>
+                        <div class="mt-6">
+                            <p class="text-4xl font-bold">₹7,200</p>
+                            <p class="text-lg text-gray-400"><del>₹7,500</del></p>
+                        </div>
+                        <p class="mt-1 text-gray-500 text-sm">₹240 per image</p>
+                        <div class="flex-grow"></div>
+                        <a href="#contact" class="mt-8 block w-full text-center bg-gray-100 text-gray-800 px-6 py-3 rounded-full hover:bg-gray-200 transition-colors">Get Started</a>
+                    </div>
+
+                    <div class="border-2 border-finaura-gold rounded-xl p-6 flex flex-col relative overflow-hidden fade-in" style="transition-delay: 400ms;">
+                        <span class="absolute top-0 right-0 bg-finaura-gold text-white text-xs font-bold px-4 py-1 rounded-bl-lg">MOST POPULAR</span>
+                        <h3 class="text-xl font-bold">Growth</h3>
+                        <p class="mt-2 text-gray-500">Up to 75 images</p>
+                         <div class="mt-6">
+                            <p class="text-4xl font-bold">₹16,500</p>
+                            <p class="text-lg text-gray-400"><del>₹18,000</del></p>
+                        </div>
+                         <p class="mt-1 text-gray-500 text-sm">₹220 per image</p>
+                        <div class="flex-grow"></div>
+                        <a href="#contact" class="mt-8 block w-full text-center bg-finaura-gold text-white px-6 py-3 rounded-full hover:opacity-90 transition-opacity">Get Started</a>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-xl p-6 flex flex-col fade-in" style="transition-delay: 500ms;">
+                        <h3 class="text-xl font-bold">Scale</h3>
+                        <p class="mt-2 text-gray-500">Up to 120 images</p>
+                         <div class="mt-6">
+                            <p class="text-4xl font-bold">₹24,000</p>
+                            <p class="text-lg text-gray-400"><del>₹28,800</del></p>
+                        </div>
+                        <p class="mt-1 text-gray-500 text-sm">₹200 per image</p>
+                        <div class="flex-grow"></div>
+                        <a href="#contact" class="mt-8 block w-full text-center bg-gray-100 text-gray-800 px-6 py-3 rounded-full hover:bg-gray-200 transition-colors">Contact Us</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="creative-lab" class="py-20 md:py-32 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <div class="text-center max-w-3xl mx-auto">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 fade-in">AI Creative Lab</h2>
+                    <p class="mt-4 text-3xl md:text-5xl font-bold tracking-tight fade-in" style="transition-delay: 100ms;">Experience the Magic Firsthand.</p>
+                    <p class="mt-6 text-lg text-gray-600 fade-in" style="transition-delay: 200ms;">Use our Gemini-powered tools to generate a fashion concept image or create compelling marketing copy for your product. See what's possible in just a few seconds.</p>
+                </div>
+                <div class="mt-16 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    
+                    <div class="bg-white p-8 rounded-xl shadow-lg fade-in" style="transition-delay: 300ms;">
+                        <h3 class="text-2xl font-bold">✨ AI Photoshoot Sandbox</h3>
+                        <p class="mt-2 text-gray-600">Describe the scene you envision. Be detailed!</p>
+                        <textarea id="image-prompt" class="mt-4 w-full h-32 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-finaura-gold focus:border-finaura-gold transition" placeholder="E.g., A model wearing a red silk dress, standing on a balcony in Santorini at sunset, cinematic lighting, ultrarealistic photo."></textarea>
+                        <button id="generate-image-btn" class="mt-4 w-full bg-finaura-gold text-white px-6 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                            Generate Image
+                        </button>
+                        <div id="image-result-container" class="mt-6 w-full aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+                            <p class="text-gray-500">Your generated image will appear here.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl shadow-lg fade-in" style="transition-delay: 400ms;">
+                         <h3 class="text-2xl font-bold">✨ AI Copywriter</h3>
+                        <p class="mt-2 text-gray-600">Describe your product. We'll write the captions.</p>
+                        <textarea id="text-prompt" class="mt-4 w-full h-32 p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-finaura-gold focus:border-finaura-gold transition" placeholder="E.g., A flowing, blue silk maxi dress with a halter neck. Perfect for summer weddings or evening events."></textarea>
+                        <button id="generate-text-btn" class="mt-4 w-full bg-finaura-gold text-white px-6 py-3 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                           Generate Copy
+                        </button>
+                        <div id="text-result-container" class="mt-6 w-full min-h-[200px] bg-gray-100 rounded-lg p-6">
+                             <p class="text-gray-500">Generated social media copy will appear here.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section id="benefits" class="py-20 md:py-32 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center max-w-3xl mx-auto">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 fade-in">Why It Works</h2>
+                    <p class="mt-4 text-3xl md:text-5xl font-bold tracking-tight fade-in" style="transition-delay: 100ms;">The Smartest Way to Create.</p>
+                </div>
+                <div class="mt-16 max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="flex items-start space-x-6 p-6 fade-in" style="transition-delay: 200ms;">
+                        <span class="text-4xl">💰</span>
+                        <div>
+                            <h3 class="text-xl font-semibold">Fraction of the Cost</h3>
+                            <p class="mt-1 text-gray-600">Get exceptional, campaign-ready results without the high price tag of traditional photoshoots.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-6 p-6 fade-in" style="transition-delay: 300ms;">
+                        <span class="text-4xl">⚡️</span>
+                        <div>
+                            <h3 class="text-xl font-semibold">Unmatched Speed</h3>
+                            <p class="mt-1 text-gray-600">A turnaround that matches your pace. Go from product photo to perfected image within 24 hours.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-6 p-6 fade-in" style="transition-delay: 400ms;">
+                        <span class="text-4xl">🎨</span>
+                        <div>
+                            <h3 class="text-xl font-semibold">Limitless Creativity</h3>
+                            <p class="mt-1 text-gray-600">Explore limitless looks, diverse models, and every aesthetic imaginable without physical constraints.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-6 p-6 fade-in" style="transition-delay: 500ms;">
+                        <span class="text-4xl">✅</span>
+                        <div>
+                            <h3 class="text-xl font-semibold">Zero Logistics, Zero Risk</h3>
+                            <p class="mt-1 text-gray-600">Forget about shipping, insurance, and coordination. We deliver digital perfection, hassle-free.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="use-cases" class="py-20 md:py-32 bg-gray-50">
+            <div class="container mx-auto px-6">
+                 <div class="text-center max-w-3xl mx-auto">
+                    <h2 class="text-sm font-bold uppercase tracking-widest text-gray-500 fade-in">Where You Shine</h2>
+                    <p class="mt-4 text-3xl md:text-5xl font-bold tracking-tight fade-in" style="transition-delay: 100ms;">Elevate Your Brand Everywhere.</p>
+                </div>
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                    <div class="p-8 fade-in" style="transition-delay: 200ms;">
+                        <h3 class="text-xl font-semibold finaura-gold">Product Listings</h3>
+                        <p class="mt-2 text-gray-600">Create high-converting e-commerce images that make your products irresistible.</p>
+                    </div>
+                    <div class="p-8 fade-in" style="transition-delay: 300ms;">
+                         <h3 class="text-xl font-semibold finaura-gold">Social Campaigns</h3>
+                        <p class="mt-2 text-gray-600">Generate scroll-stopping content for Instagram, Facebook, and TikTok that grabs attention.</p>
+                    </div>
+                    <div class="p-8 fade-in" style="transition-delay: 400ms;">
+                         <h3 class="text-xl font-semibold finaura-gold">Marketing Materials</h3>
+                        <p class="mt-2 text-gray-600">Design stunning visuals for your ads, newsletters, and promotional materials.</p>
+                    </div>
+                    <div class="p-8 fade-in" style="transition-delay: 500ms;">
+                         <h3 class="text-xl font-semibold finaura-gold">Brand Lookbooks</h3>
+                        <p class="mt-2 text-gray-600">Build your entire season's lookbook with diverse styles and scenes, all in a matter of days.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="py-20 md:py-32 bg-gray-900 text-white">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-3xl md:text-5xl font-bold tracking-tight fade-in">Ready to Transform Your Vision?</h2>
+                <p class="mt-6 max-w-2xl mx-auto text-lg text-gray-300 fade-in" style="transition-delay: 200ms;">Let's create something extraordinary together. Ditch the logistics and embrace the future of fashion imagery. Get in touch to start your first project.</p>
+                <a href="mailto:hello@finaura.ai" class="mt-10 inline-block bg-finaura-gold text-white text-lg px-10 py-4 rounded-full hover:opacity-90 transition-opacity transform hover:scale-105 fade-in" style="transition-delay: 400ms;">Start a Project</a>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-gray-800 text-gray-300 py-12">
+        <div class="container mx-auto px-6 text-center">
+             <a href="#hero" class="flex items-center justify-center space-x-2">
+                <span class="text-2xl font-extrabold tracking-tighter text-white">FINAURA</span>
+                <span class="text-xl font-medium text-gray-400 tracking-wide">AI STUDIO</span>
+            </a>
+            <div class="mt-6 flex justify-center items-center space-x-8 text-sm">
+                <a href="mailto:hello@finaura.ai" class="hover:text-finaura-gold transition-colors">hello@finaura.ai</a>
+                <span class="text-gray-500">|</span>
+                <a href="tel:+15551234567" class="hover:text-finaura-gold transition-colors">+1 (555) 123-4567</a>
+                 <span class="text-gray-500">|</span>
+                <a href="#" class="hover:text-finaura-gold transition-colors">www.finaura.ai</a>
+            </div>
+            <p class="mt-6 text-xs text-gray-500">&copy; 2025 FINAURA AI STUDIO. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sliders = document.querySelectorAll('.comparison-slider');
+
+            sliders.forEach(slider => {
+                const beforeImgSrc = slider.dataset.before;
+                const afterImgSrc = slider.dataset.after;
+                
+                slider.innerHTML = `
+                    <img src="${beforeImgSrc}" alt="Before" class="comparison-image before" onerror="this.onerror=null;this.src='https://placehold.co/600x600/e2e8f0/4a5568?text=Image+Not+Found';">
+                    <img src="${afterImgSrc}" alt="After" class="comparison-image after" onerror="this.onerror=null;this.src='https://placehold.co/600x600/a0aec0/ffffff?text=Image+Not+Found';">
+                    <div class="comparison-handle"><div class="comparison-handle-button"></div></div>
+                    <div class="label before">Before</div>
+                    <div class="label after">After</div>
+                `;
+
+                let isDragging = false;
+                const afterImage = slider.querySelector('.after');
+                const handle = slider.querySelector('.comparison-handle');
+
+                const startDrag = () => isDragging = true;
+                const stopDrag = () => isDragging = false;
+                
+                const onDrag = (e) => {
+                    if (!isDragging) return;
+
+                    const rect = slider.getBoundingClientRect();
+                    let offsetX;
+                    if (e.touches) {
+                       offsetX = e.touches[0].clientX - rect.left;
+                    } else {
+                       offsetX = e.clientX - rect.left;
+                    }
+
+                    let percentage = (offsetX / rect.width) * 100;
+                    percentage = Math.max(0, Math.min(100, percentage));
+
+                    afterImage.style.clipPath = `inset(0 0 0 ${percentage}%)`;
+                    handle.style.left = `${percentage}%`;
+                };
+                
+                slider.addEventListener('mousedown', startDrag);
+                slider.addEventListener('touchstart', startDrag, { passive: true });
+                
+                window.addEventListener('mouseup', stopDrag);
+                window.addEventListener('touchend', stopDrag);
+                
+                window.addEventListener('mousemove', onDrag);
+                window.addEventListener('touchmove', onDrag, { passive: true });
+            });
+
+            const fadeElements = document.querySelectorAll('.fade-in');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+
+            fadeElements.forEach(el => {
+                observer.observe(el);
+            });
+
+            const imagePrompt = document.getElementById('image-prompt');
+            const generateImageBtn = document.getElementById('generate-image-btn');
+            const imageResultContainer = document.getElementById('image-result-container');
+            
+            const textPrompt = document.getElementById('text-prompt');
+            const generateTextBtn = document.getElementById('generate-text-btn');
+            const textResultContainer = document.getElementById('text-result-container');
+
+            const apiKey = ""; 
+
+            const callGeminiApi = async (url, payload, button, container, isImage = false) => {
+                button.disabled = true;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<div class="gemini-spinner"></div>';
+                container.innerHTML = '<div class="w-full h-full flex items-center justify-center"><p class="text-gray-500">Generating, please wait...</p></div>';
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.statusText}`);
+                    }
+                    
+                    const result = await response.json();
+
+                    if (isImage) {
+                         const base64Data = result?.predictions?.[0]?.bytesBase64Encoded;
+                        if (base64Data) {
+                            const imageUrl = `data:image/png;base64,${base64Data}`;
+                            container.innerHTML = `<img src="${imageUrl}" alt="Generated fashion concept" class="w-full h-full object-cover rounded-lg">`;
+                        } else {
+                            throw new Error('No image data in response.');
+                        }
+                    } else {
+                        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                        if (text) {
+                            container.innerHTML = `<div class="text-gray-800 whitespace-pre-wrap">${text.replace(/(\* | \- )/g, '<br><br>')}</div>`;
+                        } else {
+                            throw new Error('No text content in response.');
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Gemini API call failed:', error);
+                    container.innerHTML = `<p class="text-red-500">Sorry, something went wrong. Please try again.</p>`;
+                } finally {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
+            };
+            
+            generateImageBtn.addEventListener('click', () => {
+                const userPrompt = imagePrompt.value;
+                if (!userPrompt.trim()) {
+                    alert('Please enter a description for the image.');
+                    return;
+                }
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+                const payload = { 
+                    instances: [{ prompt: userPrompt }],
+                    parameters: { "sampleCount": 1 } 
+                };
+                callGeminiApi(apiUrl, payload, generateImageBtn, imageResultContainer, true);
+            });
+
+            generateTextBtn.addEventListener('click', () => {
+                const userPrompt = textPrompt.value;
+                if (!userPrompt.trim()) {
+                    alert('Please describe your product.');
+                    return;
+                }
+                const systemPrompt = "You are an expert fashion copywriter. Given a product description, generate 3-4 distinct social media captions (for Instagram, TikTok, etc.). Each caption should have a different tone (e.g., luxury, playful, minimalist). Use emojis appropriately. Keep them short and engaging.";
+                const fullPrompt = `Product Description: "${userPrompt}"\n\nGenerate Social Media Captions:`;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-25:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: fullPrompt }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                };
+                callGeminiApi(apiUrl, payload, generateTextBtn, textResultContainer, false);
+            });
+        });
+    </script>
+</body>
+</html>
+
