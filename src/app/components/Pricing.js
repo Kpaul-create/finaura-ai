@@ -38,7 +38,7 @@ export default function Pricing() {
         
         <div className="pricing-grid">
           {pricingPlans.map((plan, index) => (
-            <div key={index} className={`pricing-card ${plan.popular ? 'popular' : ''}`}>
+            <div key={index} className={`pricing-card ${plan.popular ? 'popular' : ''} animate-fade-in-up`} style={{animationDelay: `${index * 0.2}s`}}>
               {plan.popular && <div className="popular-badge">MOST POPULAR</div>}
               <div className="pricing-content">
                 <h3 className="pricing-title">{plan.images}</h3>
@@ -85,20 +85,39 @@ export default function Pricing() {
           margin: 3rem 0;
         }
         .pricing-card {
-          background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
-          border: 1px solid #333;
-          border-radius: 8px;
-          padding: 2rem;
+          background: linear-gradient(135deg, rgba(20, 20, 20, 0.9) 0%, rgba(30, 30, 30, 0.8) 100%);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 16px;
+          padding: 2.5rem;
           position: relative;
-          transition: all 0.3s ease;
+          transition: all 0.4s ease;
+          backdrop-filter: blur(10px);
+          overflow: hidden;
+        }
+        .pricing-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, rgba(132, 204, 22, 0.05) 0%, transparent 50%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        .pricing-card:hover::before {
+          opacity: 1;
         }
         .pricing-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+          transform: translateY(-8px);
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+          border-color: rgba(132, 204, 22, 0.3);
         }
         .pricing-card.popular {
           border-color: #84CC16;
-          box-shadow: 0 0 20px rgba(132, 204, 22, 0.2);
+          box-shadow: 0 0 30px rgba(132, 204, 22, 0.3);
+          background: linear-gradient(135deg, rgba(132, 204, 22, 0.1) 0%, rgba(20, 20, 20, 0.9) 100%);
+          animation: glow 3s ease-in-out infinite;
         }
         .popular-badge {
           position: absolute;
@@ -147,18 +166,35 @@ export default function Pricing() {
         }
         .pricing-button {
           width: 100%;
-          background: #84CC16;
+          background: linear-gradient(135deg, #84CC16 0%, #A3E635 100%);
           color: #000;
           border: none;
-          padding: 0.75rem 1.5rem;
-          border-radius: 6px;
+          padding: 1rem 2rem;
+          border-radius: 12px;
           font-weight: 600;
+          font-size: 1rem;
           cursor: pointer;
           transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+        .pricing-button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.5s ease;
+        }
+        .pricing-button:hover::before {
+          left: 100%;
         }
         .pricing-button:hover {
-          background: #A3E635;
-          transform: translateY(-2px);
+          background: linear-gradient(135deg, #A3E635 0%, #84CC16 100%);
+          transform: translateY(-3px);
+          box-shadow: 0 10px 25px rgba(132, 204, 22, 0.4);
         }
         .feature-item {
           padding: 2rem 1rem;

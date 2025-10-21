@@ -5,85 +5,66 @@ export default function Header() {
     <header className="header">
       <div className="container">
         <div className="header-content">
-          <div className="logo-container">
-            <div className="logo-fallback">
-              <h1 className="logo-text">FINAURA</h1>
-              <div className="tagline-text">AI STUDIO</div>
-            </div>
-          </div>
+          <img 
+            src="/finaura.jpg"
+            alt="FINAURA AI STUDIO" 
+            className="logo-image"
+          />
         </div>
       </div>
       <style jsx>{`
         .header {
-          padding: 2rem 0;
-          border-bottom: 1px solid #333;
+          padding: 3rem 0;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(20, 20, 20, 0.9) 100%);
+          backdrop-filter: blur(10px);
+          position: relative;
+        }
+        .header::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(132, 204, 22, 0.5), transparent);
         }
         .header-content {
           display: flex;
-          justify-content: flex-start;
+          justify-content: center;
           align-items: center;
-        }
-        .logo-container {
-          display: flex;
-          align-items: center;
+          position: relative;
         }
         .logo-image {
-          height: 80px;
+          height: 120px;
           width: auto;
           object-fit: contain;
-          max-width: 200px;
+          border-radius: 20px;
+          filter: drop-shadow(0 0 20px rgba(132, 204, 22, 0.3));
+          transition: all 0.3s ease;
+          animation: float 6s ease-in-out infinite, fadeInUp 1s ease-out forwards;
+          opacity: 0;
         }
-        .logo-fallback {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-start;
-        }
-        .logo-text {
-          font-size: 2.5rem;
-          font-weight: 600;
-          letter-spacing: 0.3em;
-          margin: 0;
-          color: #84CC16;
-          text-shadow: 0 0 15px rgba(132, 204, 22, 0.5);
-          display: block;
-        }
-        .tagline-text {
-          font-size: 1rem;
-          opacity: 1;
-          letter-spacing: 0.2em;
-          color: #A3E635;
-          font-style: italic;
-          display: block;
-          margin-top: 0.25rem;
+        .logo-image:hover {
+          transform: scale(1.05);
+          filter: drop-shadow(0 0 30px rgba(132, 204, 22, 0.5));
         }
         
         @media (max-width: 768px) {
           .header {
-            padding: 1.5rem 0;
+            padding: 2rem 0;
           }
           .logo-image {
-            height: 60px;
-          }
-          .logo-text {
-            font-size: 1.5rem;
-            letter-spacing: 0.2em;
-          }
-          .tagline-text {
-            font-size: 0.75rem;
-            letter-spacing: 0.15em;
+            height: 100px;
           }
         }
         
         @media (max-width: 480px) {
+          .header {
+            padding: 1.5rem 0;
+          }
           .logo-image {
-            height: 50px;
-          }
-          .logo-text {
-            font-size: 1.25rem;
-            letter-spacing: 0.15em;
-          }
-          .tagline-text {
-            font-size: 0.7rem;
+            height: 80px;
           }
         }
       `}</style>
