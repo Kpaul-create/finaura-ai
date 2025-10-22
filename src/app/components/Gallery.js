@@ -1,95 +1,150 @@
 'use client';
 import Section from './Section';
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
-export default function Gallery() {
+// Define a default set of images to show if none are provided
+const defaultImagePairs = [
+  { before: '/path/to/before1.jpg', after: '/path/to/after1.jpg' },
+  { before: '/path/to/before2.jpg', after: '/path/to/after2.jpg' },
+  { before: '/path/to/before3.jpg', after: '/path/to/after3.jpg' },
+  { before: '/path/to/before4.jpg', after: '/path/to/after4.jpg', hasReference: true },
+  { before: '/path/to/before5.jpg', after: '/path/to/after5.jpg', hasReference: true },
+];
+
+export default function Gallery({ imagePairs = defaultImagePairs }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [sliderPosition, setSliderPosition] = useState(50);
-  const beforeAfterPairs = Array(5).fill(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const sliderContainerRef = useRef(null);
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % beforeAfterPairs.length);
+    setCurrentSlide((prev) => (prev + 1) % imagePairs.length);
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + beforeAfterPairs.length) % beforeAfterPairs.length);
+    setCurrentSlide((prev) => (prev - 1 + imagePairs.length) % imagePairs.length);
   };
 
-  const handleSliderMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
+  const handleSliderMove = useCallback((e) => {
+    if (!isDragging || !sliderContainerRef.current) return;
+    const rect = sliderContainerRef.current.getBoundingClientRect();
+    const x = (e.clientX || e.touches[0].clientX) - rect.left;
     const percentage = (x / rect.width) * 100;
     setSliderPosition(Math.max(0, Math.min(100, percentage)));
+  }, [isDragging]);
+
+  const handleDragStart = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
   };
+  
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleSliderMove);
+      window.addEventListener('touchmove', handleSliderMove);
+      window.addEventListener('mouseup', handleDragEnd);
+      window.addEventListener('touchend', handleDragEnd);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleSliderMove);
+      window.removeEventListener('touchmove', handleSliderMove);
+      window.removeEventListener('mouseup', handleDragEnd);
+      window.removeEventListener('touchend', handleDragEnd);
+    };
+  }, [isDragging, handleSliderMove, handleDragEnd]);
+
 
   return (
     <Section title="BEFORE & AFTER">
       <div className="gallery-container">
-        {/* Main Slider */}
         <div className="slider-wrapper">
           <div className="slider-container">
-            <div 
-              className="slider-track" 
+            <div
+              className="slider-track"
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
             >
-              {beforeAfterPairs.map((_, index) => (
+              {imagePairs.map((pair, index) => (
                 <div key={index} className="slide">
-                  <div className={`slider-plus-reference${(index === 3 || index === 4) ? ' has-reference' : ''}`}>  
-                    {/* Image Comparison Slider */}
-                    <div className="comparison-slider-container">
-                      <div className="comparison-slider-wrapper" onMouseMove={handleSliderMove} onMouseLeave={() => setSliderPosition(50)}>
-                        <div className="comparison-image before-image passport-size"><span>Original Image {index+1}</span></div>
-                        <div className="comparison-image after-image passport-size" style={{ clipPath: `inset(0 ${100-sliderPosition}% 0 0)`}}><span>AI Enhanced {index+1}</span></div>
-                        <div className="slider-line" style={{ left: `${sliderPosition}%` }} />
+                  <div className={`slider-plus-reference${pair.hasReference ? ' has-reference' : ''}`}>
+                    <div 
+                      ref={index === currentSlide ? sliderContainerRef : null} 
+                      className="comparison-slider-wrapper"
+                      onMouseLeave={handleDragEnd} // Stop dragging if mouse leaves
+                    >
+                      <div
+                        className="comparison-image before-image"
+                        style={{ backgroundImage: `url(${pair.before})` }}
+                      >
+                         {!pair.before.startsWith('/') && <span>Original Image</span>}
+                      </div>
+                      <div
+                        className="comparison-image after-image"
+                        style={{ 
+                          backgroundImage: `url(${pair.after})`,
+                          clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` 
+                        }}
+                      >
+                         {!pair.after.startsWith('/') && <span>AI Enhanced</span>}
+                      </div>
+                      <div className="slider-line" style={{ left: `${sliderPosition}%` }}>
+                        <div 
+                          className="slider-handle" 
+                          onMouseDown={handleDragStart}
+                          onTouchStart={handleDragStart}
+                        />
                       </div>
                     </div>
-                    {/* Reference box for sets 4 & 5 */}
-                    {(index === 3 || index === 4) && (
-                      <div className="reference-card reference-box-only passport-size"></div>
+
+                    {pair.hasReference && (
+                      <div className="reference-card reference-box-only">
+                        <span>Reference</span>
+                      </div>
                     )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
-          
-          {/* Slider Controls */}
+
           <div className="slider-controls">
-            <button className="slider-btn prev-btn" onClick={prevSlide}>
+            <button className="slider-btn prev-btn" onClick={prevSlide} aria-label="Previous Slide">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
             <div className="slider-dots">
-              {beforeAfterPairs.map((_, index) => (
+              {imagePairs.map((_, index) => (
                 <button
                   key={index}
                   className={`dot ${index === currentSlide ? 'active' : ''}`}
                   onClick={() => setCurrentSlide(index)}
+                  aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
             </div>
-            <button className="slider-btn next-btn" onClick={nextSlide}>
+            <button className="slider-btn next-btn" onClick={nextSlide} aria-label="Next Slide">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
         </div>
-
       </div>
       <style jsx>{`
         .gallery-container {
           max-width: 100%;
           margin: 0 auto;
         }
-        
-        /* Slider Styles */
+
         .slider-wrapper {
           position: relative;
           margin-bottom: 4rem;
         }
-        
+
         .slider-container {
           overflow: hidden;
           border-radius: 16px;
@@ -98,179 +153,121 @@ export default function Gallery() {
           backdrop-filter: blur(10px);
           padding: 2rem;
         }
-        
+
         .slider-track {
           display: flex;
-          transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          transition: transform 0.6s cubic-bezier(0.83, 0, 0.17, 1);
         }
-        
+
         .slide {
           min-width: 100%;
           flex-shrink: 0;
+          padding: 0 1rem;
         }
         
-        /* Image Set Container */
-        .image-set-container {
-          width: 100%;
-          max-width: 470px;
-          padding: 1rem 0.5rem;
+        .slider-plus-reference {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 2rem;
         }
-        
-        .before-after-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 3rem;
-          margin-bottom: 2rem;
+
+        .has-reference {
+          justify-content: center;
         }
-        
-        .image-section {
-          text-align: center;
+
+        .comparison-slider-wrapper {
+          position: relative;
+          width: 300px;
+          height: 400px;
+          overflow: hidden;
+          background: #111;
+          border-radius: 16px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+          cursor: ew-resize;
+          user-select: none; /* Prevent text selection while dragging */
+          border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
-        .image-label {
-          font-size: 1rem;
-          opacity: 0.8;
-          margin-bottom: 1.5rem;
-          letter-spacing: 0.1em;
+
+        .comparison-image {
+          position: absolute;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          display: flex;
+          align-items: center; justify-content: center;
           color: #84CC16;
+          font-weight: 600;
+          font-size: 1.1rem;
+          background-size: cover;
+          background-position: center;
+        }
+        
+        .before-image {
+          z-index: 1;
+        }
+        .after-image {
+          z-index: 2;
+        }
+        
+        .slider-line {
+          position: absolute;
+          top: 0; bottom: 0;
+          width: 4px;
+          background: rgba(255,255,255,0.8);
+          box-shadow: 0 0 10px rgba(132, 204, 22, 0.7);
+          z-index: 10;
+          pointer-events: none;
+          transform: translateX(-50%); /* Center the line */
+        }
+
+        .slider-handle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #84CC16;
+            border-radius: 50%;
+            border: 3px solid #1a1a1a;
+            box-shadow: 0 0 15px rgba(132, 204, 22, 0.5);
+            pointer-events: all;
+            cursor: ew-resize;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .slider-handle:before, .slider-handle:after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-color: transparent #1a1a1a transparent transparent;
+            border-width: 4px 4px 4px 0;
+        }
+        .slider-handle:after {
+            transform: rotate(180deg);
+        }
+
+        .slider-handle:hover, .slider-handle:active {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 0 25px rgba(132, 204, 22, 0.8);
+        }
+
+        .reference-box-only {
+          background: linear-gradient(135deg, rgba(132, 204, 22, 0.05) 0%, rgba(20,20,20,0.1) 100%);
+          border: 2px dashed rgba(132, 204, 22, 0.4);
+          display: flex; align-items: center; justify-content: center;
+          width: 300px;
+          height: 400px;
+          border-radius: 16px;
+          color: #84CC16;
+          opacity: 0.7;
           font-weight: 500;
         }
         
-        .image-placeholder {
-          background: linear-gradient(135deg, rgba(20, 20, 20, 0.9) 0%, rgba(30, 30, 30, 0.8) 100%);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #84CC16;
-          font-size: 1rem;
-          backdrop-filter: blur(10px);
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .passport-size {
-          width: 150px;
-          height: 180px;
-          margin: 0 auto;
-        }
-        
-        .image-placeholder::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(135deg, rgba(132, 204, 22, 0.1) 0%, transparent 50%);
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        
-        .image-placeholder:hover::before {
-          opacity: 1;
-        }
-        
-        .image-placeholder:hover {
-          transform: scale(1.05);
-          border-color: rgba(132, 204, 22, 0.3);
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        }
-        
-        .image-placeholder::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(135deg, rgba(132, 204, 22, 0.1) 0%, transparent 50%);
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        
-        .image-placeholder:hover::before {
-          opacity: 1;
-        }
-        
-        /* Reference Section */
-        .reference-section {
-          margin-top: 3rem;
-          padding: 2rem;
-          background: linear-gradient(135deg, rgba(20, 20, 20, 0.8) 0%, rgba(30, 30, 30, 0.6) 100%);
-          border: 1px solid rgba(132, 204, 22, 0.2);
-          border-radius: 16px;
-          backdrop-filter: blur(10px);
-        }
-        
-        .reference-title {
-          font-family: 'Playfair Display', serif;
-          font-size: 1.5rem;
-          font-weight: 300;
-          text-align: center;
-          margin-bottom: 2rem;
-          color: #84CC16;
-          letter-spacing: 0.05em;
-        }
-        
-        .reference-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-          gap: 2rem;
-        }
-        
-        .reference-card {
-          background: linear-gradient(135deg, rgba(20, 20, 20, 0.9) 0%, rgba(30, 30, 30, 0.8) 100%);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          padding: 1.5rem;
-          backdrop-filter: blur(10px);
-          transition: all 0.3s ease;
-          text-align: center;
-        }
-        
-        .reference-card:hover {
-          transform: translateY(-5px);
-          border-color: rgba(132, 204, 22, 0.3);
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        }
-        
-        .reference-image {
-          height: 120px;
-          background: linear-gradient(135deg, rgba(132, 204, 22, 0.1) 0%, rgba(20, 20, 20, 0.9) 100%);
-          border: 1px solid rgba(132, 204, 22, 0.2);
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #84CC16;
-          font-weight: 600;
-          margin-bottom: 1rem;
-          transition: all 0.3s ease;
-        }
-        
-        .reference-image:hover {
-          transform: scale(1.02);
-          border-color: rgba(132, 204, 22, 0.5);
-        }
-        
-        .reference-content h5 {
-          font-size: 1rem;
-          font-weight: 600;
-          margin-bottom: 0.5rem;
-          color: #ffffff;
-        }
-        
-        .reference-content p {
-          color: #e0e0e0;
-          opacity: 0.8;
-          line-height: 1.4;
-          font-size: 0.875rem;
-        }
-        
-        /* Slider Controls */
         .slider-controls {
           display: flex;
           align-items: center;
@@ -278,7 +275,7 @@ export default function Gallery() {
           gap: 2rem;
           margin-top: 2rem;
         }
-        
+
         .slider-btn {
           background: linear-gradient(135deg, #84CC16 0%, #A3E635 100%);
           border: none;
@@ -288,147 +285,61 @@ export default function Gallery() {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #000;
+          color: #1a1a1a;
           cursor: pointer;
           transition: all 0.3s ease;
           box-shadow: 0 4px 15px rgba(132, 204, 22, 0.3);
         }
-        
+
         .slider-btn:hover {
           transform: scale(1.1);
           box-shadow: 0 6px 20px rgba(132, 204, 22, 0.5);
         }
-        
+
         .slider-dots {
           display: flex;
           gap: 0.75rem;
         }
-        
+
         .dot {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          border: none;
-          background: rgba(255, 255, 255, 0.3);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          background: transparent;
           cursor: pointer;
           transition: all 0.3s ease;
         }
-        
+
         .dot.active {
           background: #84CC16;
+          border-color: #84CC16;
           transform: scale(1.2);
         }
         
         .dot:hover {
-          background: rgba(132, 204, 22, 0.7);
-        }
-        
-        .slider-plus-reference {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.2rem;
+          border-color: #84CC16;
         }
 
-        .has-reference {
-          justify-content: center;
-        }
-
-        .comparison-slider-container {
-          flex: 1;
-          display: flex;
-          justify-content: center;
-        }
-
-        .comparison-slider-wrapper {
-          position: relative;
-          width: 240px;
-          height: 300px;
-          overflow: hidden;
-          background: linear-gradient(135deg, rgba(20,20,20,0.8), rgba(40,40,40,0.8));
-          border-radius: 32px;
-        }
-        .comparison-image {
-          position: absolute;
-          top: 0; left: 0;
-          width: 100%; height: 100%;
-          display: flex;
-          align-items: center; justify-content: center;
-          color: #84CC16;
-          font-weight: 600;
-          font-size: 1.05rem;
-          margin: 0; padding: 0;
-          border-radius: 32px;
-        }
-        .before-image {
-          background: linear-gradient(135deg, rgba(100,100,100,0.14) 0%, rgba(50,50,50,0.2) 100%);
-          z-index: 1;
-        }
-        .after-image {
-          background: linear-gradient(135deg, rgba(132,204,22,0.18) 0%, rgba(30,30,30,0.7) 100%);
-          z-index: 2;
-        }
-        .slider-line {
-          position: absolute;
-          top: 0; bottom: 0;
-          width: 3px;
-          background: #84CC16;
-          border-radius: 8px;
-          z-index: 10;
-          pointer-events: none;
-          transition: background 0.2s;
-        }
-        .reference-box-only {
-          background: linear-gradient(135deg, rgba(132, 204, 22, 0.12) 0%, rgba(20,20,20,0.38) 100%);
-          border: 1.5px dashed #84CC16;
-          display: flex; align-items: center; justify-content: center;
-          min-width: 90px;
-          margin-left: 0.7rem;
-          width: 240px;
-          height: 300px;
-          border-radius: 32px;
-        }
-        
-        
         @media (max-width: 768px) {
-          .before-after-grid {
-            grid-template-columns: 1fr;
-            gap: 2rem;
+          .slider-plus-reference {
+            flex-direction: column;
+            gap: 1.5rem;
           }
-          
-          .passport-size,
-          .reference-box-only,
           .comparison-slider-wrapper,
-          .comparison-image {
-            width: 180px;
-            height: 220px;
-            border-radius: 24px;
+          .reference-box-only {
+            width: 240px;
+            height: 320px;
           }
-          
           .slider-controls {
             gap: 1rem;
           }
-          
           .slider-btn {
             width: 40px;
             height: 40px;
           }
-          
-          .reference-grid {
-            grid-template-columns: 1fr;
-          }
-          
-          .reference-section {
-            padding: 1.5rem;
-          }
-          .slider-plus-reference {
-            flex-direction: column;
-            gap: 0.7rem;
-          }
-          .reference-box-only {
-            margin-left: 0;
-            margin-top: 0.7rem;
-            min-width: 60px;
+          .slide {
+            padding: 0;
           }
         }
       `}</style>
