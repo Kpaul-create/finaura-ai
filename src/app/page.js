@@ -11,7 +11,6 @@ import Problem from './components/Problem';
 import { useScrollAnimation } from './hooks/useScrollAnimation'
 
 export default function Home() {
-  const problemRef = useScrollAnimation(0.2);
   const promiseRef = useScrollAnimation(0.2);
   const benefitsRef = useScrollAnimation(0.2);
   const useCasesRef = useScrollAnimation(0.2);
@@ -33,7 +32,7 @@ export default function Home() {
             JUST PURE, EDITORIAL-GRADE IMAGERY AT SCALE.
           </p>
           <p className="promise-guarantee">
-            DELIVERED WITHIN 24 HOURS — OR ITS ON US.
+            DELIVERED WITHIN 24 HOURS — OR IT&apos;S ON US.
           </p>
         </div>
         <style jsx>{`
