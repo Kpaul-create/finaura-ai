@@ -38,3 +38,4 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 =======
 finaura
 >>>>>>> de1c2090d7eadce2831d0b4b755b9fb07e6430e3
+# finaura-ai
