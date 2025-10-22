@@ -33,7 +33,7 @@ export default function Home() {
             JUST PURE, EDITORIAL-GRADE IMAGERY AT SCALE.
           </p>
           <p className="promise-guarantee">
-            DELIVERED WITHIN 24 HOURS — OR IT'S ON US.
+            DELIVERED WITHIN 24 HOURS — OR ITS ON US.
           </p>
         </div>
         <style jsx>{`
