@@ -1,11 +1,11 @@
 'use client';
-import Image from 'next/image';
+
 export default function Header() {
   return (
     <header className="header">
       <div className="container">
         <div className="header-content">
-          <Image 
+          <img 
             src="/finaura.jpg"
             alt="FINAURA AI STUDIO" 
             className="logo-image"
