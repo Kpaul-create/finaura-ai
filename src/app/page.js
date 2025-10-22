@@ -11,6 +11,7 @@ import Problem from './components/Problem';
 import { useScrollAnimation } from './hooks/useScrollAnimation'
 
 export default function Home() {
+  const problemRef = useScrollAnimation(0.2);
   const promiseRef = useScrollAnimation(0.2);
   const benefitsRef = useScrollAnimation(0.2);
   const useCasesRef = useScrollAnimation(0.2);
@@ -18,7 +19,7 @@ export default function Home() {
     <main>
       <Header />
       <Hero />
-      <Problem />
+      <Problem ref={problemRef} />
       
       {/* Promise Section */}
       <Section title="OUR PROMISE">
